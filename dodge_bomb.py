@@ -14,6 +14,22 @@ DELTA = {
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
+#こうかとんと爆弾が外の画面に出ないようにする関数
+def check_bound(rct: pg.Rect) -> tuple[bool, bool]:  #関数アノテーション
+    #docstring
+    """
+    引数：こうかとRect or 爆弾Rect
+    戻り値：判定結果タプル(横方向判定結果、縦方向判定結果)
+    /True:画面内|False:画面外   
+    """
+    
+    yoko, tate = True, True
+    if rct.left < 0 or WIDTH < rct.right:  #横方向判定
+        yoko = False
+    if rct.top < 0 or HEIGHT < rct.bottom:  #縦方向判定
+        tate = False
+    return yoko, tate
+
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -31,6 +47,8 @@ def main():
     vx, vy = +5, +5  #速度
     clock = pg.time.Clock()
     tmr = 0
+
+
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT: 
@@ -53,9 +71,16 @@ def main():
                sum_mv[1] += mv[1]  #縦方向の移動量
 
         kk_rct.move_ip(sum_mv)
+        if check_bound(kk_rct) != (True, True):
+            kk_rct.move_ip(-sum_mv[0], -sum_mv[1])  #動きをなかったことにする
         screen.blit(kk_img, kk_rct)  #こうかとん用
 
         bb_rct.move_ip(vx, vy)
+        yoko, tate = check_bound(bb_rct)
+        if not yoko:  #横方向にはみ出てたら
+            vx *= -1
+        if not tate:
+            vy *= -1 
         screen.blit(bb_img, bb_rct)  #爆弾用
         pg.display.update()
         tmr += 1
